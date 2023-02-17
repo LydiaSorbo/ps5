@@ -1,0 +1,70 @@
+---
+title: "ps5-gapminderData"
+author: "Lydia Sorbo"
+date: "2023-02-17"
+output: html_document
+---
+
+## 1. **Load and Check Data**
+
+**Question 1.2**
+
+```{r message=FALSE}
+library(tidyverse)
+```
+
+```{r}
+gapminder <- read_delim("gapminder.csv.bz2")
+```
+
+The gapminder data has `r nrow(gapminder)` rows and `r ncol(gapminder)` columns.
+
+**Question 1.3**
+
+```{r}
+gapminder %>% 
+  sample_n(5)
+```
+
+## 2. **Descriptive Statistics**
+
+**Question 2.1**
+
+There are `r length(unique(gapminder$name))` countries in the dataset.
+
+There are `r length(unique(gapminder$iso2))` iso2 codes in the dataset.
+
+There are `r length(unique(gapminder$iso3))` iso3 codes in the dataset.
+
+**Question 2.2.a**
+
+```{r}
+gapminder %>% 
+  group_by(iso2) %>% 
+  reframe(totalCountries = length(unique(name)), unique(name)) %>% 
+  tail(5)
+```
+
+The iso2 code for Namibia is being recognized as missing since it is "NA", resulting in 249 iso2 codes for 250 countries.
+
+**Question 2.2.b**
+
+```{r}
+gapminder %>% 
+  group_by(iso3) %>% 
+  reframe(totalCountries = length(unique(name)), unique(name))
+```
+
+The iso3 codes CHANISL, NLD CURACAO, and GBM have missing country names, resulting in 253 iso3 codes for 250 countries.
+
+**Question 2.3**
+
+```{r}
+gapminder %>% 
+  filter(!is.na(time)) %>% 
+  summarize(minYear = min(time), maxYear = max(time))
+```
+
+The minimum year is 1960 and the maximum year is 2019.
+
+## 3. **CO2 Emissions**

@@ -68,3 +68,43 @@ gapminder %>%
 The minimum year is 1960 and the maximum year is 2019.
 
 ## 3. **CO2 Emissions**
+
+**Question 3.1**
+
+```{r}
+gapminder %>% 
+  group_by(time) %>% 
+  filter(is.na(co2)) %>% 
+  filter(is.na(co2_PC)) %>% 
+  reframe(missingco2 = length(co2), missingco2PC = length(co2_PC)) %>% 
+  arrange(desc(missingco2)) %>% 
+  head(5)
+```
+
+2017-19 have the most missing emissions data at 217.
+
+**Question 3.2**
+
+```{r}
+gapminder %>% 
+  filter(!is.na(co2)) %>% 
+  filter(iso3 == "USA" | iso3 == "CHN" | 
+           iso3 == "IND", iso3 == "CAN", iso3 == "RUS") %>% 
+  ggplot(aes(time, co2, col=factor(iso3))) +
+  geom_line() +
+  labs(x = "Time (years)", y = "CO2 Emissions", 
+       col = "Country")
+```
+
+**Question 3.3**
+
+```{r}
+gapminder %>% 
+  filter(!is.na(co2_PC)) %>% 
+  filter(iso3 == "USA" | iso3 == "CHN" | 
+           iso3 == "IND", iso3 == "CAN", iso3 == "RUS") %>% 
+  ggplot(aes(time, co2_PC, col=factor(iso3))) +
+  geom_line() +
+  labs(x = "Time (years)", y = "CO2 Per Capita Emissions", 
+       col = "Country")
+```

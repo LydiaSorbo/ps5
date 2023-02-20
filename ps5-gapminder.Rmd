@@ -88,13 +88,15 @@ gapminder %>%
 ```{r}
 gapminder %>% 
   filter(!is.na(co2)) %>% 
-  filter(iso3 == "USA" | iso3 == "CHN" | 
-           iso3 == "IND", iso3 == "CAN", iso3 == "RUS") %>% 
-  ggplot(aes(time, co2, col=factor(iso3))) +
+  filter(iso3 == "CHN" | iso3 == "USA" | 
+           iso3 == "IND" | iso3 == "CAN" | iso3 == "RUS") %>% 
+  ggplot(aes(time, co2, col=iso3)) +
   geom_line() +
   labs(x = "Time (years)", y = "CO2 Emissions", 
        col = "Country")
 ```
+
+China has the highest CO2 emissions, followed by the United States. While China and the United States emissions are currently decreasing, India's emissions are increasing. Russia and Canada's emissions are staying constant.
 
 **Question 3.3**
 
@@ -102,9 +104,229 @@ gapminder %>%
 gapminder %>% 
   filter(!is.na(co2_PC)) %>% 
   filter(iso3 == "USA" | iso3 == "CHN" | 
-           iso3 == "IND", iso3 == "CAN", iso3 == "RUS") %>% 
+           iso3 == "IND" | iso3 == "CAN" | iso3 == "RUS") %>% 
   ggplot(aes(time, co2_PC, col=factor(iso3))) +
   geom_line() +
   labs(x = "Time (years)", y = "CO2 Per Capita Emissions", 
        col = "Country")
 ```
+
+The United States has the highest CO2 emissions per capita, followed by Canada. While China, the United States, and Canada emissions per capita are currently decreasing, India and Russia emissions are beginning to increase.
+
+**Question 3.4**
+
+```{r}
+averageEmissions <- gapminder %>% 
+  filter(time == "2016") %>% 
+  group_by(region) %>% 
+  filter(!is.na(region)) %>% 
+  filter(!is.na(co2_PC)) %>% 
+  reframe(avgEmissions = mean(co2_PC))
+
+averageEmissions %>% 
+  ggplot() +
+  geom_col(aes(x = region, y = avgEmissions),
+               fill="lightblue") +
+  labs(x = "Continent (Region)", y = "Average CO2 Per Capita Emissions")
+```
+
+
+Europe has the highest average CO2 per capita emissions, followed by Asia and the Americas. Africa has significantly lower average CO2 per capita emissions than the other regions.
+
+**Question 3.5**
+
+```{r}
+averageEmissionsYear <- gapminder %>% 
+  filter(time == "1960" | time == "2016") %>% 
+  group_by(region, time) %>% 
+  filter(!is.na(region)) %>% 
+  filter(!is.na(co2_PC)) %>% 
+  reframe(avgEmissions = mean(co2_PC))
+
+averageEmissionsYear %>% 
+   ggplot(aes(x = region, y = avgEmissions, fill=factor(time))) +
+   geom_col(position = "dodge") +
+   scale_fill_manual(
+      values = c("1960"="lightblue", "2016" = "steelblue3")
+   ) +
+    labs(x = "Continent (Region)", y = "Average CO2 Per Capita Emissions", fill = "Year")
+```
+
+**Question 3.6**
+(using 2016 data since many missing values in 2019)
+
+```{r}
+gapminder %>% 
+  filter(time == "2016") %>% 
+  group_by(region) %>% 
+  filter(!is.na(region)) %>% 
+  filter(!is.na(name)) %>% 
+  filter(!is.na(co2_PC)) %>% 
+  filter(rank(co2_PC) <= 3 | rank(desc(co2_PC)) <= 3) %>% 
+  arrange(co2_PC) %>% 
+  reframe(region, name, co2_PC)
+```
+
+## 4. **GDP Per Capita**
+
+**Question 4.1**
+
+```{r}
+gdp <- gapminder %>% 
+  filter(time == "1960") %>% 
+  filter(!is.na(GDP_PC)) %>% 
+  filter(!is.na(lifeExpectancy)) %>% 
+  filter(!is.na(name)) %>% 
+  group_by(name)
+
+ggplot(data = gdp) +
+  geom_point(mapping = aes(x = GDP_PC, y = lifeExpectancy, 
+                           color = region, size = totalPopulation)) +
+    labs(x = "GDP Per Capita", y = "Life Expectancy", 
+         col = "Continent", size = "Country Size")
+```
+
+As GDP per capita increases, life expectancy increases. European countries seem to have higher GDP per capita, while African countries have lower GDP per capita. 
+
+**Question 4.2**
+
+```{r}
+gdp2019 <- gapminder %>% 
+  filter(time == "2019") %>% 
+  filter(!is.na(GDP_PC)) %>% 
+  filter(!is.na(lifeExpectancy)) %>% 
+  filter(!is.na(name)) %>% 
+  group_by(name)
+
+ggplot(data = gdp2019) +
+  geom_point(mapping = aes(x = GDP_PC, y = lifeExpectancy, 
+                           color = region, size = totalPopulation)) +
+    labs(x = "GDP Per Capita", y = "Life Expectancy", 
+         col = "Continent", size = "Country Size")
+```
+
+**Question 4.3**
+
+Country size and life expectancy has increased significantly overall. However, similarly in both graphs, as GDP per capita increases, life expectancy increases. African countries have the lowest GDP per capita in both graphs while European countries have the highest. The world population and life expectancy has increased significantly over the last 60 years.
+
+**Question 4.4**
+
+```{r}
+gapminder %>% 
+  group_by(region, time) %>%
+  filter(!is.na(time)) %>% 
+  filter(time %in% c("1960", "2019")) %>% 
+  filter(!is.na(region)) %>% 
+  filter(!is.na(lifeExpectancy)) %>%
+  reframe("avgLifeExpectancy" = mean(lifeExpectancy)) %>% 
+  arrange((time))
+```
+
+These results match corresponding figures.
+
+**Question 4.5**
+
+```{r}
+gapminder %>% 
+  group_by(region, time) %>%
+  filter(!is.na(time)) %>% 
+  filter(time %in% c("1960", "2019")) %>% 
+  filter(!is.na(region)) %>% 
+  filter(!is.na(lifeExpectancy)) %>%
+  reframe("avgLifeExpectancy" = mean(lifeExpectancy)) %>% 
+  mutate(prev = lag(avgLifeExpectancy), growth = avgLifeExpectancy - prev) %>% 
+  filter(time == "2019") %>% 
+  arrange(desc(time))
+```
+Asia has had the most growth in average life expectancy, followed by Africa. Europe has had the least growth but has the highest average overall. 
+
+**Question 6.6**
+
+```{r}
+gdpPerCap <- gapminder %>% 
+  filter(time == "1960" | time == "2016") %>% 
+  group_by(region, time) %>% 
+  filter(!is.na(region)) %>% 
+  filter(!is.na(GDP_PC)) %>% 
+  reframe(avgGDPperCap = mean(GDP_PC))
+
+gdpPerCap %>% 
+   ggplot(aes(x = region, y = avgGDPperCap, fill=factor(time))) +
+   geom_col(position = "dodge") +
+   scale_fill_manual(
+      values = c("1960"="green3", "2016" = "green4")
+   ) +
+    labs(x = "Continent (Region)", y = "GDP Per Capita", fill = "Year")
+```
+
+**Question 4.7**
+
+```{r}
+gapminder %>% 
+  group_by(name, time) %>%
+  filter(!is.na(time)) %>% 
+  filter(time == "2019") %>% 
+  filter(!is.na(name)) %>% 
+  filter(!is.na(lifeExpectancy)) %>%
+  reframe(lifeExpectancy) %>% 
+  arrange(desc(lifeExpectancy)) %>% 
+  mutate(ranking = row_number()) %>% 
+  filter(rank(desc(lifeExpectancy)) <= length(name)) %>% 
+  arrange(ranking) %>% 
+  filter(name == "United States of America")
+```
+
+```{r}
+gapminder %>% 
+  group_by(name, time) %>%
+  filter(!is.na(time)) %>% 
+  filter(time == "1960") %>% 
+  filter(!is.na(name)) %>% 
+  filter(!is.na(lifeExpectancy)) %>%
+  reframe(lifeExpectancy) %>% 
+  arrange(desc(lifeExpectancy)) %>% 
+  mutate(ranking = row_number()) %>% 
+  filter(rank(desc(lifeExpectancy)) <= length(name)) %>% 
+  arrange(ranking) %>% 
+  filter(name == "United States of America")
+```
+
+The U.S. ranking in 2019 was 46th and was 17th in 1960.
+
+**Question 4.8**
+
+```{r}
+gapminder %>% 
+  group_by(name, time) %>%
+  filter(!is.na(time)) %>% 
+  filter(time == "1960") %>% 
+  filter(!is.na(name)) %>% 
+  filter(!is.na(lifeExpectancy)) %>%
+  reframe(lifeExpectancy) %>% 
+  arrange(desc(lifeExpectancy)) %>% 
+  mutate(ranking = row_number()) %>% 
+  filter(rank(desc(lifeExpectancy)) <= length(name)) %>%
+  arrange(ranking) %>% 
+  mutate(relativeRank = round(ranking/length(name), 4)) %>% 
+  filter(name == "United States of America")
+```
+
+```{r}
+gapminder %>% 
+  group_by(name, time) %>%
+  filter(!is.na(time)) %>% 
+  filter(time == "2019") %>% 
+  filter(!is.na(name)) %>% 
+  filter(!is.na(lifeExpectancy)) %>%
+  reframe(lifeExpectancy) %>% 
+  arrange(desc(lifeExpectancy)) %>% 
+  mutate(ranking = row_number()) %>% 
+  filter(rank(desc(lifeExpectancy)) <= length(name)) %>%
+  arrange(ranking) %>% 
+  mutate(relativeRank = round(ranking/length(name), 4)) %>% 
+  filter(name == "United States of America")
+```
+
+The U.S relative rank was .0904 in 1960 and .2347 in 2019.
+
+**I spent 6-7 hours on this assignment.**
